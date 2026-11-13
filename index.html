@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#6366F1" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#1E293B" media="(prefers-color-scheme: dark)" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self'; script-src 'self';" />
+    <title>Expense &amp; Budget Visualizer</title>
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+    <div id="app">
+
+      <!-- ── Toast Notification ── -->
+      <div id="toast" role="status" aria-live="polite"></div>
+
+      <!-- ── App Shell ── -->
+      <div class="app-container">
+
+        <!-- ── Header ── -->
+        <header class="app-header">
+          <div class="header-inner">
+            <div class="header-brand">
+              <span class="app-logo" aria-hidden="true">💰</span>
+              <h1 class="app-title">Budget<span class="accent">Viz</span></h1>
+            </div>
+            <div class="header-controls">
+              <!-- Theme Toggle -->
+              <button class="btn-icon btn-theme" id="btn-theme" aria-label="Switch to dark mode" title="Toggle theme">
+                <!-- Sun icon (shown in dark mode) -->
+                <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+                  <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+                  <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+                  <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+                </svg>
+                <!-- Moon icon (shown in light mode) -->
+                <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                </svg>
+              </button>
+              <!-- Add Transaction -->
+              <button class="btn-icon btn-add" id="btn-add-trigger" aria-label="Add transaction" title="Add transaction">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </header>
+
+        <!-- ── Main Content ── -->
+        <main>
+
+          <!-- ── Balance & Budget Overview ── -->
+          <section class="card overview-card" aria-label="Balance overview">
+            <div class="overview-grid">
+              <div class="overview-balance">
+                <span class="label">Total Balance</span>
+                <span class="balance-amount" id="total-balance">Rp0</span>
+              </div>
+              <div class="overview-split">
+                <div class="overview-item income">
+                  <span class="ov-icon" aria-hidden="true">↑</span>
+                  <div>
+                    <span class="label">Income</span>
+                    <span class="ov-amount" id="total-income">Rp0</span>
+                  </div>
+                </div>
+                <div class="overview-item expense">
+                  <span class="ov-icon" aria-hidden="true">↓</span>
+                  <div>
+                    <span class="label">Expenses</span>
+                    <span class="ov-amount" id="total-expenses">Rp0</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Budget Progress -->
+            <div class="budget-section">
+              <div class="budget-header">
+                <span class="label">Monthly Budget</span>
+                <div class="budget-edit-row">
+                  <span class="budget-display" id="budget-display">Not set</span>
+                  <button class="btn-text" id="btn-edit-budget" aria-label="Edit monthly budget">Edit</button>
+                </div>
+              </div>
+              <div class="budget-input-row hidden" id="budget-input-row">
+                <input type="number" id="budget-input" class="input-inline" placeholder="0" min="0" step="1000" aria-label="Enter monthly budget amount" />
+                <button class="btn-save" id="btn-save-budget">Save</button>
+              </div>
+              <div class="progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="progress-track">
+                <div class="progress-bar" id="progress-bar"></div>
+              </div>
+              <div class="budget-meta">
+                <span id="budget-spent-label">Rp0 terpakai</span>
+                <span id="budget-pct-label">—</span>
+              </div>
+            </div>
+          </section>
+
+          <!-- ── Spending by Category (Donut Chart) ── -->
+          <section class="card chart-card" aria-label="Spending by category">
+            <h2 class="section-title">Spending by Category</h2>
+            <div class="chart-wrapper">
+              <div class="chart-area">
+                <svg id="donut-svg" viewBox="0 0 200 200" aria-label="Donut chart of spending by category" role="img">
+                  <g id="donut-slices"></g>
+                  <g id="donut-center">
+                    <text id="donut-center-label"  x="100" y="97"  text-anchor="middle" class="donut-label-title">Total</text>
+                    <text id="donut-center-amount" x="100" y="113" text-anchor="middle" class="donut-label-amount">Rp0</text>
+                    <text id="donut-center-pct"    x="100" y="128" text-anchor="middle" class="donut-label-pct"></text>
+                  </g>
+                </svg>
+              </div>
+              <div class="chart-legend" id="chart-legend" role="list" aria-label="Category legend"></div>
+            </div>
+            <p class="chart-empty" id="chart-empty">No expenses yet. Add a transaction to see your spending breakdown.</p>
+          </section>
+
+          <!-- ── Transaction History ── -->
+          <section class="card transactions-card" aria-label="Transaction history">
+            <div class="tx-header">
+              <h2 class="section-title">Transactions</h2>
+              <div class="tx-actions">
+                <button class="btn-text btn-sample" id="btn-load-sample">Load Sample</button>
+                <button class="btn-text btn-reset"  id="btn-reset">Reset</button>
+              </div>
+            </div>
+
+            <!-- Search -->
+            <div class="search-row">
+              <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </svg>
+              <input type="search" id="search-input" class="search-input" placeholder="Search transactions…" aria-label="Search transactions" />
+            </div>
+
+            <!-- Filter + Sort row -->
+            <div class="controls-row">
+              <!-- Filter Pills -->
+              <div class="filter-row" role="tablist" aria-label="Filter transactions">
+                <button class="filter-pill active" data-filter="all"     role="tab" aria-selected="true">All</button>
+                <button class="filter-pill"         data-filter="expense" role="tab" aria-selected="false">Expenses</button>
+                <button class="filter-pill"         data-filter="income"  role="tab" aria-selected="false">Income</button>
+              </div>
+              <!-- Sort Control -->
+              <div class="sort-wrapper">
+                <label class="visually-hidden" for="sort-select">Sort by</label>
+                <select id="sort-select" class="sort-select" aria-label="Sort transactions">
+                  <option value="date-desc">Newest First</option>
+                  <option value="date-asc">Oldest First</option>
+                  <option value="amount-desc">Highest Amount</option>
+                  <option value="amount-asc">Lowest Amount</option>
+                  <option value="category-az">Category A–Z</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Active Category Filter Badge -->
+            <div class="active-cat-filter hidden" id="active-cat-filter">
+              <span id="active-cat-label">Filtered by: —</span>
+              <button class="btn-clear-cat" id="btn-clear-cat" aria-label="Clear category filter">✕</button>
+            </div>
+
+            <!-- Transaction List -->
+            <ul class="tx-list" id="tx-list" role="list" aria-label="Transactions"></ul>
+            <p class="tx-empty" id="tx-empty">No transactions found.</p>
+          </section>
+
+        </main>
+      </div><!-- /.app-container -->
+
+      <!-- ── Add Transaction Modal / Bottom Sheet ── -->
+      <div class="modal-overlay" id="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-hidden="true">
+        <div class="modal-sheet" id="modal-sheet">
+          <div class="modal-drag-handle" aria-hidden="true"></div>
+          <div class="modal-header">
+            <h2 class="modal-title" id="modal-title">Add Transaction</h2>
+            <button class="btn-icon modal-close" id="btn-close-modal" aria-label="Close modal">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          </div>
+
+          <!-- Type Toggle -->
+          <div class="type-toggle" role="group" aria-label="Transaction type">
+            <button class="type-btn active" data-type="expense" id="type-expense">
+              <span class="type-icon" aria-hidden="true">↓</span> Expense
+            </button>
+            <button class="type-btn" data-type="income" id="type-income">
+              <span class="type-icon" aria-hidden="true">↑</span> Income
+            </button>
+          </div>
+
+          <!-- Form -->
+          <form id="tx-form" novalidate>
+            <div class="form-group">
+              <label class="form-label" for="tx-amount">Amount</label>
+              <div class="input-currency-wrapper">
+                <span class="currency-symbol" aria-hidden="true">Rp</span>
+                <input type="number" id="tx-amount" class="input-field" placeholder="0" min="1" step="1000" required aria-required="true" />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="tx-description">Description</label>
+              <input type="text" id="tx-description" class="input-field" placeholder="e.g. Coffee at Starbucks" maxlength="80" required aria-required="true" />
+            </div>
+
+            <!-- Category Selector -->
+            <div class="form-group" id="category-group">
+              <div class="category-label-row">
+                <span class="form-label" id="cat-label">Category</span>
+                <button type="button" class="btn-add-cat" id="btn-open-custom-cat" aria-label="Add custom category" aria-expanded="false" aria-controls="custom-cat-drawer">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" width="12" height="12">
+                    <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                  </svg>
+                  Add Category
+                </button>
+              </div>
+              <div class="category-grid" id="category-grid" role="listbox" aria-labelledby="cat-label"></div>
+            </div>
+
+            <!-- ── Custom Category Mini-Drawer ── -->
+            <div class="custom-cat-drawer hidden" id="custom-cat-drawer" aria-hidden="true">
+              <div class="drawer-inner">
+                <p class="drawer-title">New Category</p>
+                <div class="custom-cat-fields">
+                  <div class="custom-cat-emoji-wrap">
+                    <label class="form-label" for="custom-cat-emoji">Icon</label>
+                    <input type="text" id="custom-cat-emoji" class="input-field emoji-input" placeholder="🏷️" maxlength="2" aria-label="Category emoji icon" />
+                  </div>
+                  <div class="custom-cat-name-wrap">
+                    <label class="form-label" for="custom-cat-name">Name</label>
+                    <input type="text" id="custom-cat-name" class="input-field" placeholder="e.g. Gym" maxlength="24" aria-label="Category name" />
+                  </div>
+                </div>
+                <div class="form-group">
+                  <span class="form-label">Accent Color</span>
+                  <div class="color-swatch-row" id="color-swatch-row" role="listbox" aria-label="Pick category color"></div>
+                </div>
+                <div class="drawer-actions">
+                  <button type="button" class="btn-text" id="btn-cancel-custom-cat">Cancel</button>
+                  <button type="button" class="btn-save" id="btn-save-custom-cat">Save Category</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="tx-date">Date</label>
+              <input type="date" id="tx-date" class="input-field" required aria-required="true" />
+            </div>
+
+            <button type="submit" class="btn-primary" id="btn-submit-tx">Add Transaction</button>
+          </form>
+        </div>
+      </div><!-- /.modal-overlay -->
+
+    </div><!-- /#app -->
+
+    <script src="js/app.js"></script>
+  </body>
+</html>
